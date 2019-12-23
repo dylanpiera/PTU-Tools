@@ -1,7 +1,18 @@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <div class="text-center">
+                        <h1>Error 401. Unauthorized.</h1>
+                        <p>It seems you don't belong here. Maybe try logging in?</p>
+                        <RadzenImage Path="https://i.chzbgr.com/full/8208052224/h6F9F9BB8/" />
+                    </div>
+                </NotAuthorized>
+                <Authorizing>
+                    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </Authorizing>
+            </AuthorizeRouteView>
         </Found>
         <NotFound>
             <LayoutView Layout="@typeof(MainLayout)">

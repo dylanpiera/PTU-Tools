@@ -39,7 +39,11 @@ namespace PTU_Tools_Web
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
-            services.AddSingleton<WeatherForecastService>();
+
+
+
+            ///TODO: Update this to be the proper class name
+            services.AddSingleton<Google_Sheets_Integration.Class1>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
