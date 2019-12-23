@@ -43,7 +43,7 @@ namespace PTU_Tools_Web
 
 
             ///TODO: Update this to be the proper class name
-            services.AddSingleton<Google_Sheets_Integration.Class1>();
+            services.AddSingleton<Google_Sheets_Integration.Connection>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
