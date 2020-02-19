@@ -1,5 +1,31 @@
 ﻿@page "/"
+@inject ApplicationDbContext DbContext
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+<h3>@Bulbasaur</h3>
+<h3>@Charmander</h3>
+<h3>@Squirtle</h3>
+
+@code { 
+
+    public string Bulbasaur { get; set; } = "n/a";
+    public string Charmander { get; set; } = "n/a";
+    public string Squirtle { get; set; } = "n/a";
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            Bulbasaur = DbContext.GetPokemonTable("Bulbasaur").WhereLevelUpMove(c => c.Requirement == 1).FirstOrDefault()?.Name ?? "Null";
+            Charmander = DbContext.GetPokemonTable("Charmander").LevelUpMove(c => c.Requirement == 1)?.Name ?? "Null";
+            Squirtle = DbContext.GetPokemonTable("Squirtle").LevelUpMove(1)?.Name ?? "Null";
+        }
+        catch (Exception e)
+        {
+            Charmander = e.ToString();
+        }
+    }
+}
