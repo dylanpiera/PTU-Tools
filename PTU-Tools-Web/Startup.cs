@@ -15,6 +15,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PTU_Tools_Web.Areas.Identity;
 using PTU_Tools_Web.Data;
+using Google_Sheets_Integration;
+using Google.Apis.Sheets.v4;
+using Google.Apis.Services;
+using Google.Apis.Auth.OAuth2;
+using System.IO;
 
 namespace PTU_Tools_Web
 {
@@ -34,16 +39,13 @@ namespace PTU_Tools_Web
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
 
-
-
-            ///TODO: Update this to be the proper class name
-            services.AddSingleton<Google_Sheets_Integration.Connection>();
+            services.AddGoogleSheetsAPI();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

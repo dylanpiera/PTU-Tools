@@ -1,0 +1,44 @@
+﻿@page "/GeneratePokemon"
+@attribute [Authorize]
+@inject SheetsService sheetApi
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<p>@Result</p>
+
+@code {
+    public string Result { get; set; } = "n/a";
+    public Spreadsheet Spreadsheet { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            string spreadsheetId = "159uvxjmT2NAEakq0GyIIe2X38fKAgdazXIVJQgpCU4E";
+            Spreadsheet = await sheetApi.Spreadsheets.Get(spreadsheetId).ExecuteAsync();
+
+            var sheet = Spreadsheet.Sheets.First(x => x.Properties.Title == "Pokemon Template");
+
+            await sheetApi.Spreadsheets.BatchUpdate(new BatchUpdateSpreadsheetRequest()
+            {
+                Requests = new List<Request> { new Request { DuplicateSheet = new DuplicateSheetRequest { SourceSheetId = sheet.Properties.SheetId, NewSheetName = "Bulbasaur Test" } } }
+            }, spreadsheetId).ExecuteAsync();
+
+            sheet = (await sheetApi.Spreadsheets.Get(spreadsheetId).ExecuteAsync()).Sheets.First(x => x.Properties.Title == "Bulbasaur Test");
+
+            var updateRequest = sheetApi.Spreadsheets.Values.Update(new ValueRange { Values = new List<IList<object>> { new List<object> { "Bulbasaur" } }, Range = "Bulbasaur Test!J1:J1" }, spreadsheetId, "Bulbasaur Test!J1:J1");
+            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
+
+            await updateRequest.ExecuteAsync();
+
+            var result = (await sheetApi.Spreadsheets.Get(spreadsheetId).ExecuteAsync()).Sheets.First(x => x.Properties.Title == "Bulbasaur Test");
+            Result = result.Data[0].RowData[0].Values[9].EffectiveValue.StringValue;
+        }
+        catch (Exception e)
+        {
+            Result = e.ToString();
+        }
+    }
+}

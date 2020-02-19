@@ -350,3 +350,4 @@ MigrationBackup/
 
 # Sheets API key file
 credentials.json
+PTU-Tools-Web/google-credentials.json
