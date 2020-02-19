@@ -6,39 +6,53 @@
 
 Welcome to your new app.
 
-<p>@Result</p>
+@if (Ready)
+{
+    <p>@Result</p>
+}
+else
+{
+    <Radzen.Blazor.RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Value="0" ShowValue="false" Style="width: 100%;"/>
+}
 
 @code {
-    public string Result { get; set; } = "n/a";
-    public Spreadsheet Spreadsheet { get; set; }
+    public string Result { get; set; }
+    public SpreadsheetTools Spreadsheet { get; set; }
+    private bool Ready { get; set; } = false;
+    private bool Processing { get; set; } = false;
 
     protected async override Task OnInitializedAsync()
     {
-        try
+        if (!Ready && !Processing)
         {
-            string spreadsheetId = "159uvxjmT2NAEakq0GyIIe2X38fKAgdazXIVJQgpCU4E";
-            Spreadsheet = await sheetApi.Spreadsheets.Get(spreadsheetId).ExecuteAsync();
-
-            var sheet = Spreadsheet.Sheets.First(x => x.Properties.Title == "Pokemon Template");
-
-            await sheetApi.Spreadsheets.BatchUpdate(new BatchUpdateSpreadsheetRequest()
+            Processing = true;
+            try
             {
-                Requests = new List<Request> { new Request { DuplicateSheet = new DuplicateSheetRequest { SourceSheetId = sheet.Properties.SheetId, NewSheetName = "Bulbasaur Test" } } }
-            }, spreadsheetId).ExecuteAsync();
+                string spreadsheetId = "159uvxjmT2NAEakq0GyIIe2X38fKAgdazXIVJQgpCU4E";
+                Spreadsheet = await sheetApi.GetSpreadsheetTools(spreadsheetId);
 
-            sheet = (await sheetApi.Spreadsheets.Get(spreadsheetId).ExecuteAsync()).Sheets.First(x => x.Properties.Title == "Bulbasaur Test");
+                var sheet = Spreadsheet.Sheets.WithTitle("Pokemon Template");
+                retry:
+                try
+                {
+                    await Spreadsheet.DuplicateSheet(sheet, "Bulbasaur Test");
+                }
+                catch
+                {
+                    await Spreadsheet.DeleteSheet(Spreadsheet.Sheets.WithTitle("Bulbasaur Test"));
+                    goto retry;
+                }
 
-            var updateRequest = sheetApi.Spreadsheets.Values.Update(new ValueRange { Values = new List<IList<object>> { new List<object> { "Bulbasaur" } }, Range = "Bulbasaur Test!J1:J1" }, spreadsheetId, "Bulbasaur Test!J1:J1");
-            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
+                await Spreadsheet.EditCell("Bulbasaur Test!J1:J1", "Bulbasaur");
 
-            await updateRequest.ExecuteAsync();
-
-            var result = (await sheetApi.Spreadsheets.Get(spreadsheetId).ExecuteAsync()).Sheets.First(x => x.Properties.Title == "Bulbasaur Test");
-            Result = result.Data[0].RowData[0].Values[9].EffectiveValue.StringValue;
-        }
-        catch (Exception e)
-        {
-            Result = e.ToString();
+                Result = await Spreadsheet.ReadCell("Bulbasaur Test!J1:J1");
+            }
+            catch (Exception e)
+            {
+                Result = e.ToString();
+            }
+            Ready = true;
+            Processing = false;
         }
     }
 }
