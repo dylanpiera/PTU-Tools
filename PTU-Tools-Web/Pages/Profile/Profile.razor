@@ -1,0 +1,80 @@
+﻿@page "/profile/index"
+@page "/profile"
+@attribute [Authorize]
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider Provider
+
+<h1>@UserName Profile</h1>
+
+<RadzenTabs>
+    <Tabs>
+        <RadzenTabsItem Text="Games">
+            <h4 class="text-muted">Coming Soon</h4>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Sheets">
+            @if (Sheets.Count > 0 && !Setup)
+            {
+                <style>
+                    .table {
+                        table-layout: fixed;
+                    }
+                    .table tbody tr td {
+                        white-space: pre-wrap;
+                    }
+                </style>
+                <RadzenDataList WrapItems="true" AllowPaging="true" Data="Sheets" TItem="SheetModel">
+                    <Template Context="sheet">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <td>Sheet ID</td>
+                                    <td>Sheet Title</td>
+                                    <td>Access</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <p>@sheet.SheetId</p>
+                                    </td>
+                                    <td>
+                                        <p>@sheet.SheetTitle</p>
+                                    </td>
+                                    <td>
+                                        <p>@(sheet.HasAccess ? "Last time we checked we had Access :)" : "We didn't have access last time we checked :(")</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </Template>
+                </RadzenDataList>
+                <div class="pt-2"><RadzenButton Click="(args) => { Setup = true; }" ButtonStyle="ButtonStyle.Primary" Text="Add new Sheet" /></div>
+            }
+            else if (Setup)
+            {
+                <CascadingValue Value="UserId">
+                    <SetupSheets AddSavedSheet="AddSheet" />
+                </CascadingValue>
+            }
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+@code {
+    private string UserId { get; set; }
+    private string UserName { get; set; }
+    private bool Setup { get; set; } = false;
+
+    private List<SheetModel> Sheets { get; set; } = new List<SheetModel>();
+
+    private void AddSheet(SheetModel input) { Sheets.Add(input); Setup = false; StateHasChanged(); }
+
+    protected async override Task OnInitializedAsync()
+    {
+        var user = (await Provider.GetAuthenticationStateAsync()).User;
+        UserId = user.Claims.First(x => x.Type == System.Security.Claims.ClaimTypes.NameIdentifier).Value;
+        UserName = user.Claims.First(x => x.Type == System.Security.Claims.ClaimTypes.Name).Value;
+
+        Sheets = await DbContext.Sheets.Include(x => x.Owner).Where(x => x.Owner.Id == UserId).ToListAsync();
+    }
+}

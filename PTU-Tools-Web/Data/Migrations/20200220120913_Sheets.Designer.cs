@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PTU_Tools_Web.Data;
 
 namespace PTU_Tools_Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200220120913_Sheets")]
+    partial class Sheets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,9 +231,6 @@ namespace PTU_Tools_Web.Data.Migrations
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("SheetTitle")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SheetId");
 

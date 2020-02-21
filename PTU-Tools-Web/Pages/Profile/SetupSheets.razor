@@ -1,0 +1,217 @@
+﻿@inject SheetsService sheetApi
+@inject UserManager<IdentityUser> userManager
+@inject ApplicationDbContext dbContext
+<h3>Setup sheet connection</h3>
+
+@if (!string.IsNullOrEmpty(UserId))
+{
+    <RadzenSteps>
+        <Steps>
+            <RadzenStepsItem Text="Authorize">
+                <RadzenCard>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-6">
+                            <h3>Grant PTU-Tools Edit rights</h3>
+                            <p>For PTU-Tools to work properly you need to share your sheet with our Google Service account and give us edit rights.</p>
+                            <br />
+                            <h5>How To:</h5>
+                            <p>1. Open up your PTU Fancy Sheet in Google drive</p>
+                            <p>2. At the top right corner hit Share</p>
+                            <p>3. In the "People" field, add the following e-mail:</p>
+                            <RadzenTextBox Disabled="true" Value="ptu-tools@ptu-tools.iam.gserviceaccount.com" Style="width: 100%;" />
+                            <p><small class="text-muted"><b>Be sure to allow us to Edit your sheet.</b></small></p>
+                            <p>4. Hit send, you can now close your sheet.</p>
+                            <p>5. Hit continue at the bottom of this page.</p>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            <small class="text-muted">GIF Coming soon</small>
+                        </div>
+                    </div>
+                </RadzenCard>
+            </RadzenStepsItem>
+            <RadzenStepsItem Text="Provide Sheet Data">
+                <RadzenCard>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-6">
+                            <RadzenTemplateForm TItem="SheetModel" Data="Sheet" Submit="Verify">
+                                <RadzenFieldset Text="Sheet ID">
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-5">
+                                            <RadzenTextBox Style="width: 100%;" Name="SheetId" @bind-Value="Sheet.SheetId" />
+                                            <RadzenRequiredValidator Component="SheetId" Text="Sheet ID is required" Popup="false" Style="position: absolute;" />
+                                        </div>
+                                        <div class="col-sm-12 col-md-7">
+                                            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Secondary" Text="Verify" />
+                                        </div>
+                                    </div>
+                                </RadzenFieldset>
+                            </RadzenTemplateForm>
+                        </div>
+                        <div class="col-sm-12 col-md-6">
+                            @if (Verifying)
+                            {
+                                <div class="row justify-content-center">
+                                    <div class="col">
+                                        <Radzen.Blazor.RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Value="100" ShowValue="false" Style="width: 75%;" />
+                                    </div>
+                                </div>
+                            }
+                            else if (Verified)
+                            {
+                                if (Sheet.HasAccess)
+                                {
+                                    <div class="alert alert-success">
+                                        <h3>Sheet Verified!</h3>
+                                        <p>We successfully were able to access your sheet, continue below.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-danger">
+                                        <h3>Oops! Something went wrong.</h3>
+                                        <p>We did not have the right permissions to access your sheet, did you type your Sheet ID correctly? Or did you perhaps forget to give us Edit rights to your Sheet?</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </RadzenCard>
+            </RadzenStepsItem>
+            <RadzenStepsItem Text="Finalizing" Disabled="!Sheet.HasAccess">
+                <RadzenCard>
+                    <div class="row">
+                        <div class="col">
+                            <h3 class="pb-2">Double Checking!</h3>
+
+                            <RadzenTemplateForm TItem="SheetModel" Data="Sheet" Submit="Save">
+                                <RadzenFieldset Text="To Be Added Sheet">
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-6">
+                                            <RadzenLabel Text="Sheet ID" Component="SheetId" />
+                                            <RadzenTextBox Disabled="true" Style="width: 100%;" Name="SheetId" @bind-Value="Sheet.SheetId" />
+                                            <RadzenRequiredValidator Component="SheetId" Text="Sheet ID is required" Popup="false" Style="position: absolute;" />
+                                        </div>
+                                        <div class="col-sm-12 col-md-6">
+                                            <RadzenLabel Text="Sheet Title" Component="SheetTitle" />
+                                            <RadzenTextBox Disabled="true" Style="width: 100%;" Name="SheetTitle" @bind-Value="Sheet.SheetTitle" />
+                                            <RadzenRequiredValidator Component="SheetTitle" Text="Sheet Title is required" Popup="false" Style="position: absolute;" />
+                                        </div>
+                                    </div>
+                                    <div class="row pt-2">
+                                        <div class="col-sm-12 col-md-7">
+                                            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Secondary" Text="Save" />
+                                        </div>
+                                        <div class="col-sm-12 col-md-5">
+                                            @if (Verifying)
+                                            {
+                                                <div class="row justify-content-center">
+                                                    <div class="col">
+                                                        <Radzen.Blazor.RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Value="100" ShowValue="false" Style="width: 75%;" />
+                                                    </div>
+                                                </div>
+                                            }
+                                            else if (!string.IsNullOrEmpty(SaveError))
+                                            {
+                                                if (SaveError == "Forbidden")
+                                                {
+                                                    <div class="alert alert-danger">
+                                                        <h3>We had access just now, but now we don't!</h3>
+                                                        <p>Didn't we just have access? This is weird. Maybe you should try refreshing the page and try again, or don't take away our edit rights before hitting save.</p>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="alert alert-danger">
+                                                        <h3>Oops!</h3>
+                                                        <p>@SaveError</p>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </RadzenFieldset>
+                            </RadzenTemplateForm>
+                        </div>
+                    </div>
+                </RadzenCard>
+            </RadzenStepsItem>
+        </Steps>
+    </RadzenSteps>
+}
+else
+{
+    <h5>Oh that's weird, you aren't logged in yet this area is only accessible when you're logged in</h5>
+}
+
+@code {
+
+    [CascadingParameter]
+    public string UserId { get; set; }
+
+    [Parameter]
+    public Action<SheetModel> AddSavedSheet { get; set; }
+
+    public SheetModel Sheet { get; set; }
+
+    public bool Verifying { get; set; } = false;
+    public bool Verified { get; set; } = false;
+    public string SaveError { get; set; } = null;
+
+    protected override void OnInitialized()
+    {
+        Sheet = new SheetModel { HasAccess = false };
+    }
+
+    public async Task Verify()
+    {
+        Verifying = true;
+        Verified = false;
+
+        try
+        {
+            var Spreadsheet = await sheetApi.GetSpreadsheetTools(Sheet.SheetId);
+            Sheet.SheetId = Spreadsheet.Id;
+            Sheet.SheetTitle = Spreadsheet.Spreadsheet.Properties.Title;
+            Sheet.HasAccess = true;
+            Sheet.Owner = await userManager.FindByIdAsync(UserId);
+        }
+        catch (Google.GoogleApiException e)
+        {
+            Console.WriteLine(e.HttpStatusCode.ToString());
+            Sheet.HasAccess = false;
+        }
+        Verified = true;
+        Verifying = false;
+    }
+
+    public async Task Save()
+    {
+        SaveError = null;
+        await Verify();
+
+        try
+        {
+            if(Sheet.HasAccess)
+            {
+                dbContext.Sheets.Add(Sheet);
+                await dbContext.SaveChangesAsync();
+                AddSavedSheet?.Invoke(Sheet);
+            }
+            else
+            {
+                throw new Google.GoogleApiException("SheetsService", "Sheet Access Denied") { HttpStatusCode = System.Net.HttpStatusCode.Unauthorized};
+            }
+        }
+        catch (Google.GoogleApiException e)
+        {
+            Console.WriteLine(e.HttpStatusCode.ToString());
+            Sheet.HasAccess = false;
+            SaveError = e.HttpStatusCode.ToString();
+        }
+        catch (Exception)
+        {
+            Sheet.HasAccess = false;
+            SaveError = "It appears someone else already owns this sheet.";
+        }
+    }
+}
